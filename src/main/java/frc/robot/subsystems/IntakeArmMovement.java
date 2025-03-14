@@ -95,9 +95,6 @@ public class IntakeArmMovement extends SubsystemBase {
     }
 
     
-public void setArmPosition(double NewArmPosition) {
-    DesiredArmPosition = NewArmPosition;
-}
 
    /*  public Command setArmPosZero() {
         return runOnce(() -> {

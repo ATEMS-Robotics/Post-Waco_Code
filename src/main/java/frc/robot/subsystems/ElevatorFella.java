@@ -78,4 +78,3 @@ public class ElevatorFella extends SubsystemBase {
 
     //Still need to change to In inches
     //Tune the PID
-    //Non-lame gravity counteracter maybe

@@ -9,7 +9,6 @@ import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -67,12 +66,11 @@ public class RobotContainer {
     }
 
     public Command L1Score() {
-        return Commands.sequence(Commands.race(armMover.moveToArmPosition(.14), Commands.waitSeconds(1.5)), Commands.race(IntakeWheelMover.spinIntakeCommand(.25)), Commands.waitSeconds(1.5));
+        // 1. Move Arm to L1 Position
+        // 2. Spin Intake Wheels
+        return Commands.sequence(Commands.race(armMover.moveToArmPosition(.14), Commands.waitSeconds(1.5)), 
+        Commands.race(IntakeWheelMover.spinIntakeCommand(.25)), Commands.waitSeconds(1.5));
 
-        // return Commands.run(() -> {
-        //     System.out.println("Auto Arm Move To L1");
-        //     armMover.moveToArmPosition(.14);
-        // }).andThen(IntakeWheelMover.spinIntakeCommand(.1)); 
     } 
 
     public void registerNamedCommands() {
@@ -135,14 +133,18 @@ public class RobotContainer {
 
        
         // Coral Arm
-        driverController.y().onTrue(new InstantCommand(() -> armMover.setArmPosition(.2575), armMover)); // Coral Arm Up
+        driverController.y().onTrue(armMover.moveToArmPosition(.2575)); // Coral Arm Up
         driverController.y().onTrue(Commands.print("FullUp")); // Debug Print
         
-        driverController.povUp().onTrue(new InstantCommand(() -> armMover.setArmPosition(.14), armMover)); // Coral Arm Up
+        driverController.povUp().onTrue(armMover.moveToArmPosition(.14)); // Coral Arm L1
         driverController.povUp().onTrue(Commands.print("L1")); // Debug Print
         
-        driverController.povDown().onTrue(armMover.moveToArmPosition(-.115)); // Coral Arm Up
+        driverController.povDown().onTrue(armMover.moveToArmPosition(-.115)); // Coral Arm Down
         driverController.povDown().onTrue(Commands.print("DOWN")); // Debug Print
+
+        testController.leftBumper().onTrue(armMover.moveToArmPosition(.125)); // Algae Pos
+        testController.leftBumper().onTrue(Commands.print("Algae Pos")); // Debug Print
+        
 
 
 
@@ -189,6 +191,6 @@ public class RobotContainer {
     } 
 
 }
-//Add Spotless sometime
+//Add Spotless sometime, Huh????
 // Robot Sim
 //Constants file

@@ -1,0 +1,21 @@
+[
+  {
+    "type": "java",
+    "name": "jar (in project Post-Waco_Code)",
+    "extensions": [
+      {
+        "name": "Sim GUI",
+        "libName": "/Users/quinnhudson/Desktop/Robotics/Coding/Post-Waco_Code/build/jni/release/libhalsim_gui.dylib",
+        "defaultEnabled": true
+      },
+      {
+        "name": "Use Real DriverStation",
+        "libName": "/Users/quinnhudson/Desktop/Robotics/Coding/Post-Waco_Code/build/jni/release/libhalsim_ds_socket.dylib",
+        "defaultEnabled": false
+      }
+    ],
+    "environment": {},
+    "libraryDir": "/Users/quinnhudson/Desktop/Robotics/Coding/Post-Waco_Code/build/jni/release",
+    "mainClassName": "frc.robot.Main"
+  }
+]
