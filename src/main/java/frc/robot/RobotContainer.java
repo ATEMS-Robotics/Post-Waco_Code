@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.subsystems.ElevatorFella;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.AlgaeWheel;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.IntakeArmMovement;
 import frc.robot.subsystems.CoralScorer;
@@ -29,11 +30,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class RobotContainer {
     private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     private double MaxAngularRate = RotationsPerSecond.of(3.25).in(RadiansPerSecond);
-    private final DigitalInput armLimitSwitch = new DigitalInput(0);
-    public boolean holdingstate() {
-        return armLimitSwitch.get();
-    };
+    private final DigitalInput coralInArmSwitch = new DigitalInput(1); // Adjust port if needed
+  
 
+    public boolean isCoralInArm() {
+        return !coralInArmSwitch.get(); // Adjust logic if needed
+    }
 
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
             .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1)
@@ -45,6 +47,7 @@ public class RobotContainer {
     private final Telemetry logger = new Telemetry(MaxSpeed);
     private final CommandXboxController driverController = new CommandXboxController(0); 
     private final CommandXboxController testController = new CommandXboxController(1);
+    private final CommandXboxController primaryDriverController = new CommandXboxController(6);
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
     // Subsystems
@@ -53,6 +56,7 @@ public class RobotContainer {
     private final WheelIntake IntakeWheelMover = new WheelIntake();
     private final CoralScorer coralScoring = new CoralScorer();
     private final CoralTransfer coralToScoring = new CoralTransfer();
+    private final AlgaeWheel algaeWheel = new AlgaeWheel();
     
     private final SendableChooser<Command> autoChooser;
 
@@ -73,6 +77,16 @@ public class RobotContainer {
 
     } 
 
+    public Command L1AutoScore() {
+        return Commands.sequence(
+            Commands.waitUntil(this::isCoralInArm),  // Wait until coral is detected
+            armMover.moveToArmPosition(0.14),       // Move arm to L1 position
+            Commands.waitSeconds(1.0),              // Wait for movement
+            coralToScoring.spinIntestine(0.3).withTimeout(1.0), // Move coral internally
+            coralToScoring.stopIntestine()          // Stop intestine movement
+        );
+    }
+
     public void registerNamedCommands() {
         NamedCommands.registerCommand("L1 Arm Score", this.L1Score());
     }
@@ -81,13 +95,23 @@ public class RobotContainer {
     private final boolean enableSysId = false; // Set to true for testing, false for competition, enables testing code
 
     private void configureBindings() {
-        drivetrain.setDefaultCommand(
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(-driverController.getLeftY() * MaxSpeed)
-                    .withVelocityY(-driverController.getLeftX() * MaxSpeed)
-                    .withRotationalRate(-driverController.getRightX() * MaxAngularRate)
-            )
-        );
+         //Old Single-Controller Version
+         drivetrain.setDefaultCommand(
+             drivetrain.applyRequest(() ->
+             drive.withVelocityX(-primaryDriverController.getLeftY() * MaxSpeed)
+                     .withVelocityY(-primaryDriverController.getLeftX() * MaxSpeed)
+                    .withRotationalRate(-primaryDriverController.getRightX() * MaxAngularRate)
+             )
+         );
+
+        // New Dual-Controller Version
+        //drivetrain.setDefaultCommand(
+        //    drivetrain.applyRequest(() ->
+        //        drive.withVelocityX(-driverController.getLeftY() * MaxSpeed)
+        //            .withVelocityY(-driverController.getLeftX() * MaxSpeed)
+        //            .withRotationalRate(-driverController.getRightX() * MaxAngularRate)
+        //    )
+        //);
 
         armMover.setDefaultCommand(
             new RunCommand(() -> armMover.moveToArmPosition(), armMover));
@@ -95,11 +119,9 @@ public class RobotContainer {
         testController.x().toggleOnTrue(drivetrain.applyRequest(() -> brake));
         testController.x().onTrue(Commands.print("He On X-Games Mode"));
         testController.rightTrigger().onTrue(this.L1Score());
+        primaryDriverController.povUp().onTrue(this.L1AutoScore());
 
-       // driverController.y().and(driverController.back()).whileTrue(drivetrain.applyRequest(() ->
-        //    point.withModuleDirection(new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX()))
-        //));
-
+      
 
         
         drivetrain.registerTelemetry(logger::telemeterize);
@@ -145,7 +167,9 @@ public class RobotContainer {
         testController.leftBumper().onTrue(armMover.moveToArmPosition(.125)); // Algae Pos
         testController.leftBumper().onTrue(Commands.print("Algae Pos")); // Debug Print
         
-
+        // Algae Wheel
+        driverController.x().whileTrue(algaeWheel.spinFlywheel(0.5));
+        driverController.x().onFalse(algaeWheel.stopFlywheel());
 
 
         // Spin Intake Wheels
@@ -185,7 +209,6 @@ public class RobotContainer {
     }
 
     public void periodic() { 
-        SmartDashboard.putBoolean("LimitSwitch", !armLimitSwitch.get());
        
         
     } 
